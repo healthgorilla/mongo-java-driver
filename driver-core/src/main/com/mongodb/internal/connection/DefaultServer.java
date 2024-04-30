@@ -46,6 +46,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
 import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.wrapAndLogServerIsLessThanExpectedVersion;
 import static java.util.Arrays.asList;
 
 class DefaultServer implements ClusterableServer {
@@ -138,7 +139,7 @@ class DefaultServer implements ClusterableServer {
             serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
                     .state(CONNECTING).address(serverId.getAddress()).build()));
             connect();
-            if (description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION) {
+            if (wrapAndLogServerIsLessThanExpectedVersion(description.getMaxWireVersion(), FOUR_DOT_TWO_WIRE_VERSION)) {
                 connectionPool.invalidate();
             }
         }
@@ -165,7 +166,7 @@ class DefaultServer implements ClusterableServer {
                         .state(CONNECTING).address(serverId.getAddress()).exception(t).build()));
                 connect();
 
-                if (maxWireVersion < FOUR_DOT_TWO_WIRE_VERSION || SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
+                if (wrapAndLogServerIsLessThanExpectedVersion(maxWireVersion, FOUR_DOT_TWO_WIRE_VERSION) || SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
                     connectionPool.invalidate();
                 }
             }

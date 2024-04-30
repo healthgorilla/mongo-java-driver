@@ -20,6 +20,8 @@ import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.io.BsonOutput;
 
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
+
 /**
  * An OP_DELETE message.
  *
@@ -30,6 +32,8 @@ class DeleteMessage extends LegacyMessage {
 
     DeleteMessage(final String collectionName, final DeleteRequest deleteRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
+        String messageStr = "DeleteMessage: Constructor called with: " + collectionName + ", " + deleteRequest + ", " + settings;
+        logMessageAndPrintStackTrace(messageStr, "Unsupported server command");
         this.deleteRequest = deleteRequest;
     }
 

@@ -20,9 +20,10 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.operation.ServerVersionHelper;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -115,6 +116,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
     }
 
     protected String getCommandName(final RequestMessage message) {
+        ServerVersionHelper.logMessageAndPrintStackTrace("WriteProtocol: getCommandName called with message: " + message, "Unsupported Operation: " + message.getOpCode());
         switch (message.getOpCode()) {
             case OP_INSERT:
                 return "insert";

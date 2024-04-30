@@ -95,10 +95,10 @@ public final class ServerVersionHelper {
         HG_LOGGER.warn(logMessage, new Exception(errorMessage));
     }
 
-    private static boolean wrapAndLogServerIsLessThanExpectedVersion(final int maxWireVersion, final int expectedMaxWireVersion) {
+    public static boolean wrapAndLogServerIsLessThanExpectedVersion(final int maxWireVersion, final int expectedMaxWireVersion) {
         boolean isIncompatible = maxWireVersion < expectedMaxWireVersion;
         if (isIncompatible) {
-            logMessageAndPrintStackTrace("ServerVersionHelper: Server version is not at least " + getWireVersionFromInt(expectedMaxWireVersion) + ", but is " + getWireVersionFromInt(maxWireVersion), "Error Message");
+            logMessageAndPrintStackTrace("ServerVersionHelper: Server version is not at least " + getWireVersionFromInt(expectedMaxWireVersion) + ", but is " + getWireVersionFromInt(maxWireVersion), "Unsupported server command");
         }
         return isIncompatible;
     }

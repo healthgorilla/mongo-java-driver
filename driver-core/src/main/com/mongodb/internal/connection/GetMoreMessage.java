@@ -18,6 +18,8 @@ package com.mongodb.internal.connection;
 
 import org.bson.io.BsonOutput;
 
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
+
 /**
  * An OP_GET_MORE message.
  *
@@ -29,6 +31,8 @@ class GetMoreMessage extends LegacyMessage {
 
     GetMoreMessage(final String collectionName, final long cursorId, final int numberToReturn) {
         super(collectionName, OpCode.OP_GETMORE, MessageSettings.builder().build());
+        String messageStr = "GetMoreMessage: Constructor called with: " + collectionName + ", " + cursorId + ", " + numberToReturn;
+        logMessageAndPrintStackTrace(messageStr, "Unsupported server command");
         this.cursorId = cursorId;
         this.numberToReturn = numberToReturn;
     }

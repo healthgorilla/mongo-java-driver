@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.operation.ServerVersionHelper;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import org.bson.BsonArray;
@@ -52,6 +53,7 @@ import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDo
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.wrapAndLogServerIsLessThanExpectedVersion;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -288,7 +290,9 @@ public final class CommandMessage extends RequestMessage {
         int wireVersion = getSettings().getMaxWireVersion();
         if (wireVersion < FOUR_DOT_ZERO_WIRE_VERSION
                 || (wireVersion < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER)) {
-            throw new MongoClientException("Transactions are not supported by the MongoDB cluster to which this client is connected.");
+            String message = "Transactions are not supported by the MongoDB cluster to which this client is connected.";
+            ServerVersionHelper.logMessageAndPrintStackTrace("CommandMessage: wireVersion=" + wireVersion, message);
+            throw new MongoClientException(message);
         }
     }
 
@@ -301,11 +305,8 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private static OpCode getOpCode(final MessageSettings settings) {
-        return isServerVersionAtLeastThreeDotSix(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
-    }
-
-    private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-          return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
+        wrapAndLogServerIsLessThanExpectedVersion(settings.getMaxWireVersion(), THREE_DOT_SIX_WIRE_VERSION);
+        return OpCode.OP_MSG;
     }
 
 }

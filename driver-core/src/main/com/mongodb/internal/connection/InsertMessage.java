@@ -20,6 +20,8 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import org.bson.io.BsonOutput;
 
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
+
 /**
  * An insert message.
  *
@@ -31,6 +33,8 @@ class InsertMessage extends LegacyMessage {
 
     InsertMessage(final String collectionName, final InsertRequest insertRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
+        String messageStr = "InsertMessage: Constructor called with: " + collectionName + ", " + insertRequest + ", " + settings;
+        logMessageAndPrintStackTrace(messageStr, "Unsupported server command");
         this.insertRequest = insertRequest;
     }
 

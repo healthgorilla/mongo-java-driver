@@ -24,6 +24,7 @@ import org.bson.BsonValue;
 import org.bson.io.BsonOutput;
 
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
 
 /**
  * An OP_UPDATE message.
@@ -35,6 +36,8 @@ class UpdateMessage extends LegacyMessage {
 
     UpdateMessage(final String collectionName, final UpdateRequest updateRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
+        String messageStr = "UpdateMessage: Constructor called with: " + collectionName + ", " + updateRequest + ", " + settings;
+        logMessageAndPrintStackTrace(messageStr, "Unsupported server command");
         this.updateRequest = updateRequest;
     }
 

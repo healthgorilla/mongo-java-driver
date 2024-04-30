@@ -25,8 +25,8 @@ import com.mongodb.client.internal.ChangeStreamIterableImpl;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.client.internal.OperationExecutor;
+import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterSettings;
@@ -42,9 +42,14 @@ import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -63,6 +68,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -817,7 +823,16 @@ public class MongoClient implements Closeable {
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        connection.killCursor(cur.namespace, singletonList(cur.serverCursor.getId()));
+                        logMessageAndPrintStackTrace("MongoClient.cleanCursors: Forcing workaround", "Didn't even check server version!");
+                        connection.command(
+                                cur.namespace.getDatabaseName(),
+                                new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
+                                        .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId())))),
+                                new NoOpFieldNameValidator(),
+                                ReadPreference.primary(),
+                                new BsonDocumentCodec(),
+                                source.getSessionContext()
+                        );
                     } finally {
                         connection.release();
                     }
@@ -828,6 +843,11 @@ public class MongoClient implements Closeable {
                 binding.release();
             }
         }
+    }
+
+    private BsonDocument asKillCursorsCommandDocument(String collectionName, long cursorId) {
+        return new BsonDocument("killCursors", new BsonString(collectionName))
+                .append("cursors", new BsonArray(singletonList(new BsonInt64(cursorId))));
     }
 
     private static ClusterConnectionMode getSingleServerClusterMode(final MongoClientOptions options) {

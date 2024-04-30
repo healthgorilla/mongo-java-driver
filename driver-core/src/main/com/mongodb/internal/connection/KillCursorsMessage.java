@@ -36,7 +36,7 @@ class KillCursorsMessage extends LegacyMessage {
     KillCursorsMessage(final List<Long> cursors) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
         String cursorsStr = cursors != null ? cursors.stream().map(Objects::toString).collect(Collectors.joining(",")) : "null";
-        logMessageAndPrintStackTrace("KillCursorsMessage: Constructor called with cursors: {}" + cursorsStr, "Error Message");
+        logMessageAndPrintStackTrace("KillCursorsMessage: Constructor called with cursors: {}" + cursorsStr, "Unsupported server command");
         this.cursors = notNull("cursors", cursors);
     }
 
