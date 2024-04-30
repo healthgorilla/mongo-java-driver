@@ -19,8 +19,11 @@ package com.mongodb.internal.connection;
 import org.bson.io.BsonOutput;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
 
 /**
  * An OP_KILL_CURSOR message.
@@ -32,6 +35,8 @@ class KillCursorsMessage extends LegacyMessage {
 
     KillCursorsMessage(final List<Long> cursors) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
+        String cursorsStr = cursors != null ? cursors.stream().map(Objects::toString).collect(Collectors.joining(",")) : "null";
+        logMessageAndPrintStackTrace("KillCursorsMessage: Constructor called with cursors: {}" + cursorsStr, "Error Message");
         this.cursors = notNull("cursors", cursors);
     }
 
