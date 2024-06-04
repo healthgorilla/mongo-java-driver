@@ -38,6 +38,8 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
+import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_FOUR_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.wrapAndLogServerIsLessThanExpectedVersion;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -308,7 +310,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private boolean serversAreAllThreeDotFour(final ClusterDescription clusterDescription) {
         for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-            if (cur.isOk() && cur.getMaxWireVersion() < 5) {
+            if (cur.isOk() && wrapAndLogServerIsLessThanExpectedVersion(cur.getMaxWireVersion(), THREE_DOT_FOUR_WIRE_VERSION)) {
                 return false;
             }
         }

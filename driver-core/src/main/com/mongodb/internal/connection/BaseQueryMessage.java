@@ -18,6 +18,8 @@ package com.mongodb.internal.connection;
 
 import org.bson.io.BsonOutput;
 
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
+
 /**
  * Base class for OP_QUERY messages.
  *
@@ -35,6 +37,8 @@ abstract class BaseQueryMessage extends LegacyMessage {
 
     BaseQueryMessage(final String collectionName, final int skip, final int numberToReturn, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
+        String messageStr = "BaseQueryMessage: Constructor called with: " + collectionName + ", " + skip + ", " + numberToReturn + ", " + settings;
+        logMessageAndPrintStackTrace(messageStr, "Unsupported server command");
         this.skip = skip;
         this.numberToReturn = numberToReturn;
     }

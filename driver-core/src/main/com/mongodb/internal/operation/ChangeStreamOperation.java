@@ -17,12 +17,12 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -49,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.wrapAndLogServerIsLessThanExpectedVersion;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -365,7 +367,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             resumeToken = startAfter;
         } else if (resumeAfter != null) {
             resumeToken = resumeAfter;
-        } else if (startAtOperationTime == null && postBatchResumeToken == null && firstBatchEmpty && maxWireVersion >= 7) {
+        } else if (startAtOperationTime == null && postBatchResumeToken == null && firstBatchEmpty && wrapAndLogServerIsLessThanExpectedVersion(maxWireVersion, FOUR_DOT_ZERO_WIRE_VERSION)) {
             startAtOperationTime = operationTime;
         }
         return resumeToken;
@@ -383,7 +385,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         if (resumeToken != null) {
             startAtOperationTime = null;
             resumeAfter = resumeToken;
-        } else if (startAtOperationTime != null && maxWireVersion >= 7) {
+        } else if (startAtOperationTime != null && wrapAndLogServerIsLessThanExpectedVersion(maxWireVersion, FOUR_DOT_ZERO_WIRE_VERSION)) {
             resumeAfter = null;
         } else {
             resumeAfter = null;

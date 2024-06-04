@@ -21,7 +21,6 @@ import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
@@ -34,6 +33,8 @@ import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.operation.ServerVersionHelper;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
@@ -400,6 +401,7 @@ abstract class BaseCluster implements Cluster {
                 throw new IllegalStateException("Server can't be both older than the driver and newer.");
             }
         }
+        ServerVersionHelper.logMessageAndPrintStackTrace("BaseCluster.createIncompatibleException", message);
         return new MongoIncompatibleDriverException(message, curDescription);
     }
 

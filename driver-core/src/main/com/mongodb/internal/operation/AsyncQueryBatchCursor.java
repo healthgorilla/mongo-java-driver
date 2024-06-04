@@ -49,6 +49,7 @@ import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -290,25 +291,19 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
-        if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    new SingleResultCallback<BsonDocument>() {
-                        @Override
-                        public void onResult(final BsonDocument result, final Throwable t) {
-                            connection.release();
-                            connectionSource.release();
-                        }
-                    });
-        } else {
-            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    connection.release();
-                    connectionSource.release();
-                }
-            });
+        boolean isThreeDotTwo = serverIsAtLeastVersionThreeDotTwo(connection.getDescription());
+        if (!isThreeDotTwo) {
+            logMessageAndPrintStackTrace("AsyncQueryBatchCursor: Forcing workaround", "Incompatible server version");
         }
+        connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
+                ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
+                new SingleResultCallback<BsonDocument>() {
+                    @Override
+                    public void onResult(final BsonDocument result, final Throwable t) {
+                        connection.release();
+                        connectionSource.release();
+                    }
+                });
     }
 
     private BsonDocument asKillCursorsCommandDocument(final ServerCursor localCursor) {

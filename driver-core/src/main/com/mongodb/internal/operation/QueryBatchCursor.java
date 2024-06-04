@@ -44,6 +44,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
+import static com.mongodb.internal.operation.ServerVersionHelper.logMessageAndPrintStackTrace;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.util.Collections.singletonList;
 
@@ -339,12 +340,12 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (serverCursor != null) {
             notNull("connection", connection);
             try {
-                if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
-                            ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext());
-                } else {
-                    connection.killCursor(namespace, singletonList(serverCursor.getId()));
+                boolean isThreeDotTwo = serverIsAtLeastVersionThreeDotTwo(connection.getDescription());
+                if (!isThreeDotTwo) {
+                    logMessageAndPrintStackTrace("QueryBatchCursor: Forcing workaround", "Incompatible server version");
                 }
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
+                        ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext());
             } finally {
                 serverCursor = null;
             }
