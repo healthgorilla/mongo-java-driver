@@ -92,7 +92,7 @@ public final class ServerVersionHelper {
     }
 
     public static void logMessageAndPrintStackTrace(String logMessage, String errorMessage) {
-        HG_LOGGER.warn(logMessage, new Exception(errorMessage));
+//        HG_LOGGER.warn(logMessage, new Exception(errorMessage));
     }
 
     public static boolean wrapAndLogServerIsLessThanExpectedVersion(final int maxWireVersion, final int expectedMaxWireVersion) {
